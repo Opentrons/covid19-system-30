@@ -11,7 +11,7 @@ metadata = {
     'apiLevel': '2.3'
 }
 
-NUM_SAMPLES = 8  # start with 8 samples, slowly increase to 48, then 94 (max is 94)
+NUM_SAMPLES = 12  # start with 8 samples, slowly increase to 48, then 94 (max is 94)
 SAMPLE_VOL = 10
 PREPARE_MASTERMIX = True
 TIP_TRACK = False
@@ -141,12 +141,15 @@ resuming.')
         p300.touch_tip()
 
     # transfer mastermix to strips
-    vol_per_strip_well = num_cols*mm_dict['volume']*((vol_overage-1)/2+1)
     mm_strip = mm_strips.columns()[0]
     if not p300.hw_pipette['has_tip']:
         pick_up(p300)
-    for well in mm_strip:
-        p300.transfer(vol_per_strip_well, mm_tube, well, new_tip='never')
+    for i, well in enumerate(mm_strip):
+        if NUM_SAMPLES % 8 == 0 or i < NUM_SAMPLES % 8:
+            vol = num_cols*mm_dict['volume']*((vol_overage-1)/2+1)
+        else:
+            vol = (num_cols-1)*mm_dict['volume']*((vol_overage-1)/2+1)
+        p300.transfer(vol, mm_tube, well, new_tip='never')
     p300.drop_tip()
 
     # transfer mastermix to plate
