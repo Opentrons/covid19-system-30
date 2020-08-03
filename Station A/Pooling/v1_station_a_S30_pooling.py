@@ -64,12 +64,14 @@ resuming.')
     for i in range(math.ceil(NUM_SAMPLES/2)):
         if NUM_SAMPLES % 2 != 0 and i == math.ceil(NUM_SAMPLES/2) - 1:
             pool_source_set = [dest_plate.wells()[NUM_SAMPLES]]
+            vol = SAMPLE_VOLUME*2
         else:
             pool_source_set = dest_plate.wells()[i*2:i*2+2]
+            vol = SAMPLE_VOLUME
         for s in pool_source_set:
             pick_up(p1000)
-            p1000.transfer(100, s, dest_plate.wells()[i+64], air_gap=20,
-                           new_tip='never')
+            p1000.transfer(SAMPLE_VOLUME, s, dest_plate.wells()[i+64],
+                           air_gap=20, new_tip='never')
             p1000.air_gap(100)
             p1000.drop_tip()
 
