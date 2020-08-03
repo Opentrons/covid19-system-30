@@ -70,7 +70,7 @@ resuming.')
             vol = SAMPLE_VOLUME
         for s in pool_source_set:
             pick_up(p1000)
-            p1000.transfer(SAMPLE_VOLUME, s, dest_plate.wells()[i+64],
+            p1000.transfer(vol, s, dest_plate.wells()[i+64],
                            air_gap=20, new_tip='never')
             p1000.air_gap(100)
             p1000.drop_tip()
