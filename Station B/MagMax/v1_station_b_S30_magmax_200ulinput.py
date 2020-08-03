@@ -6,7 +6,7 @@ import threading
 from time import sleep
 
 metadata = {
-    'protocolName': 'Version 1 S14 Station B MagMax (200µl sample input)',
+    'protocolName': 'Version 2 S30 Station B MagMax (200µl sample input)',
     'author': 'Nick <ndiehl@opentrons.com',
     'apiLevel': '2.3'
 }
@@ -14,6 +14,7 @@ metadata = {
 NUM_SAMPLES = 8  # start with 8 samples, slowly increase to 48, then 94 (max is 94)
 ELUTION_VOL = 50
 STARTING_VOL = 500
+POOL = True
 TIP_TRACK = False
 PARK = True
 
@@ -53,7 +54,10 @@ def run(ctx):
     if PARK:
         parkingrack = ctx.load_labware(
             'opentrons_96_tiprack_300ul', '7', 'empty tiprack for parking')
-        parking_spots = parkingrack.rows()[0][:num_cols]
+        if POOL:
+            parking_spots = parkingrack.rows()[0][:5]
+        else:
+            parking_spots = parkingrack.rows()[0][:num_cols]
     else:
         tips300.insert(0, ctx.load_labware('opentrons_96_tiprack_300ul', '7',
                                            '200µl filtertiprack'))
@@ -65,8 +69,8 @@ def run(ctx):
     magdeck = ctx.load_module('magdeck', '4')
     magdeck.disengage()
     magheight = 13.7
-    magplate = magdeck.load_labware('nest_96_wellplate_2ml_deep')
-    # magplate = magdeck.load_labware('biorad_96_wellplate_200ul_pcr')
+    # magplate = magdeck.load_labware('nest_96_wellplate_2ml_deep')
+    magplate = magdeck.load_labware('biorad_96_wellplate_200ul_pcr')
     tempdeck = ctx.load_module('Temperature Module Gen2', '1')
     flatplate = tempdeck.load_labware(
                 'opentrons_96_aluminumblock_nest_wellplate_100ul',)
@@ -79,8 +83,12 @@ def run(ctx):
     wash1 = res1.wells()[:4]
     elution_solution = res1.wells()[-1]
 
-    mag_samples_m = magplate.rows()[0][:num_cols]
-    elution_samples_m = flatplate.rows()[0][:num_cols]
+    if POOL:
+        mag_samples_m = magplate.rows()[0][:3] + magplate.rows()[0][8:10]
+        elution_samples_m = flatplate.rows()[0][:3] + flatplate.rows()[0][8:10]
+    else:
+        mag_samples_m = magplate.rows()[0][:num_cols]
+        elution_samples_m = flatplate.rows()[0][:num_cols]
 
     magdeck.disengage()  # just in case
     tempdeck.set_temperature(4)
@@ -155,7 +163,6 @@ resuming.')
 
         def waste_track(vol):
             nonlocal waste_vol
-            print(waste_vol)
             if waste_vol + vol >= waste_threshold:
                 # Setup for flashing lights notification to empty liquid waste
                 # if not ctx._hw_manager.hardware.is_simulator:
@@ -173,12 +180,13 @@ resuming.')
         m300.flow_rate.aspirate = 30
         num_trans = math.ceil(vol/200)
         vol_per_trans = vol/num_trans
-        for i, (m, spot) in enumerate(zip(mag_samples_m, parking_spots)):
+        for m, spot in zip(mag_samples_m, parking_spots):
             if park:
                 pick_up(m300, spot)
             else:
                 pick_up(m300)
-            side = -1 if i % 2 == 0 else 1
+            side_ind = int(m.display_name.split(' ')[0][1:])
+            side = -1 if side_ind % 2 == 0 else 1
             loc = m.bottom(0.5).move(Point(x=side*2))
             for _ in range(num_trans):
                 waste_track(vol_per_trans)
@@ -232,8 +240,9 @@ resuming.')
         num_trans = math.ceil(wash_vol/200)
         vol_per_trans = wash_vol/num_trans
         for i, (m, spot) in enumerate(zip(mag_samples_m, parking_spots)):
+            side_ind = int(m.display_name.split(' ')[0][1:])
+            side = -1 if side_ind % 2 == 0 else 1
             pick_up(m300)
-            side = 1 if i % 2 == 0 else -1
             loc = m.bottom(0.5).move(Point(x=side*2))
             src = source[i//(12//len(source))]
             for n in range(num_trans):
@@ -258,9 +267,10 @@ resuming.')
 
     def elute(vol, park=True):
         # resuspend beads in elution
-        for i, (m, spot) in enumerate(zip(mag_samples_m, parking_spots)):
+        for m, spot in zip(mag_samples_m, parking_spots):
+            side_ind = int(m.display_name.split(' ')[0][1:])
+            side = -1 if side_ind % 2 == 0 else 1
             pick_up(m300)
-            side = 1 if i % 2 == 0 else -1
             loc = m.bottom(0.5).move(Point(x=side*2))
             m300.aspirate(vol, elution_solution)
             m300.move_to(m.center())
@@ -279,13 +289,13 @@ for 2 minutes')
         ctx.delay(minutes=2, msg='Incubating on magnet at room temperature \
 for 2 minutes')
 
-        for i, (m, e, spot) in enumerate(
-                zip(mag_samples_m, elution_samples_m, parking_spots)):
+        for m, e, spot in zip(mag_samples_m, elution_samples_m, parking_spots):
             if park:
                 pick_up(m300, spot)
             else:
                 pick_up(m300)
-            side = -1 if i % 2 == 0 else 1
+            side_ind = int(m.display_name.split(' ')[0][1:])
+            side = 1 if side_ind % 2 == 0 else -1
             loc = m.bottom(0.5).move(Point(x=side*2))
             m300.transfer(40, loc, e.bottom(5), air_gap=20, new_tip='never')
             m300.blow_out(e.top(-2))
