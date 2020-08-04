@@ -11,7 +11,7 @@ metadata = {
     'apiLevel': '2.3'
 }
 
-NUM_SAMPLES = 8  # start with 8 samples, slowly increase to 48, then 94 (max is 94)
+NUM_SAMPLES = 11  # start with 8 samples, slowly increase to 48, then 94 (max is 94)
 ELUTION_VOL = 50
 STARTING_VOL = 500
 POOL = True
@@ -69,8 +69,8 @@ def run(ctx):
     magdeck = ctx.load_module('magnetic module gen2', '4')
     magdeck.disengage()
     magheight = 13.7
-    # magplate = magdeck.load_labware('nest_96_wellplate_2ml_deep')
-    magplate = magdeck.load_labware('biorad_96_wellplate_200ul_pcr')
+    magplate = magdeck.load_labware('nest_96_wellplate_2ml_deep')
+    # magplate = magdeck.load_labware('biorad_96_wellplate_200ul_pcr')
     tempdeck = ctx.load_module('Temperature Module Gen2', '1')
     flatplate = tempdeck.load_labware(
                 'opentrons_96_aluminumblock_nest_wellplate_100ul',)
@@ -84,8 +84,8 @@ def run(ctx):
     elution_solution = res1.wells()[-1]
 
     if POOL:
-        mag_samples_m = magplate.rows()[0][:3] + magplate.rows()[0][8:10]
-        elution_samples_m = flatplate.rows()[0][:3] + flatplate.rows()[0][8:10]
+        mag_samples_m = magplate.rows()[0][:num_cols] + magplate.rows()[0][8:8+math.ceil(num_cols/2)]
+        elution_samples_m = flatplate.rows()[0][:num_cols] + flatplate.rows()[0][8:8+math.ceil(num_cols/2)]
     else:
         mag_samples_m = magplate.rows()[0][:num_cols]
         elution_samples_m = flatplate.rows()[0][:num_cols]
