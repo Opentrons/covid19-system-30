@@ -11,8 +11,8 @@ metadata = {
 }
 
 plate_1_wells = "A1,B1"
-plate_2_wells = "A1,C1"
-plate_3_wells = "A2,B2"
+plate_2_wells = ""
+plate_3_wells = ""
 SAMPLE_VOL = 10
 TIP_TRACK = False
 
@@ -42,7 +42,7 @@ def run(ctx: protocol_api.ProtocolContext):
         plate.wells_by_name()[name]
         for plate, set in zip(source_plates,
                               [plate_1_wells, plate_2_wells, plate_3_wells])
-        for name in set.split(',')]
+        for name in set.split(',') if name]
     sample_dests = pcr_plate.rows()[0][:len(sources)]
 
     tip_log = {'count': {}}
