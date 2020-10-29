@@ -43,7 +43,7 @@ def run(ctx: protocol_api.ProtocolContext):
         for plate, set in zip(source_plates,
                               [plate_1_wells, plate_2_wells, plate_3_wells])
         for name in set.split(',') if name]
-    sample_dests = pcr_plate.rows()[0][:len(sources)]
+    sample_dests = pcr_plate.wells()[:len(sources)]
 
     tip_log = {'count': {}}
     folder_path = '/data/C'
